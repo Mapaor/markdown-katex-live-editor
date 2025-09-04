@@ -172,7 +172,7 @@ export default function MarkdownPreview() {
     chars: 0,
     readingTime: 0,
   })
-  const { theme, setTheme } = useTheme()
+  const { resolvedTheme, setTheme } = useTheme()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -306,7 +306,7 @@ export default function MarkdownPreview() {
 
   const toggleTheme = () => {
     if (!mounted) return
-    setTheme(theme === "dark" ? "light" : "dark")
+    setTheme(resolvedTheme === "dark" ? "light" : "dark")
   }
 
   const downloadPDF = async () => {
@@ -378,7 +378,7 @@ export default function MarkdownPreview() {
             <Button variant="ghost" size="sm" onClick={toggleTheme}>
               {!mounted ? (
                 <Moon className="h-4 w-4" />
-              ) : theme === "dark" ? (
+              ) : resolvedTheme === "dark" ? (
                 <Sun className="h-4 w-4" />
               ) : (
                 <Moon className="h-4 w-4" />
