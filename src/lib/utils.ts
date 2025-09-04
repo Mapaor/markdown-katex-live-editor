@@ -1,89 +1,152 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+// import { TypstCompiler } from "@myriaddreamin/typst-ts-web-compiler";
+import { createTypstCompiler } from "@myriaddreamin/typst.ts";
+
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
 
-export function markdown2typst(mdContent: string) {
-  // For now, use a simple approach without external packages
-  // Convert basic markdown to Typst manually
+/**
+ * Convert Markdown into a Typst document using cmarker + mitex.
+ * Math will be rendered properly and the document will use a serif font.
+ */
+export function markdown2typst(mdContent: string): string {
+  return `
+#import "@preview/cmarker:0.1.6": cmarker
+#import "@preview/mitex:0.2.4": mitex
+#set page(margin: 1in)
+
+#cmarker.render(${JSON.stringify(mdContent)}, math: mitex)
+  `;
+}
+
+/**
+ * Fallback: Convert Markdown to simple Typst without external packages
+ */
+export function markdown2typstSimple(mdContent: string): string {
+  console.log("Original markdown content:", mdContent);
+  
+  // Convert basic markdown to Typst
   const typstContent = mdContent
     // Convert headers
-    .replace(/^### (.*$)/gm, '=== $1')
-    .replace(/^## (.*$)/gm, '== $1') 
-    .replace(/^# (.*$)/gm, '= $1')
+    .replace(/^### (.+)$/gm, '=== $1')
+    .replace(/^## (.+)$/gm, '== $1')
+    .replace(/^# (.+)$/gm, '= $1')
     // Convert bold and italic
-    .replace(/\*\*(.*?)\*\*/g, '*$1*')
-    .replace(/\*(.*?)\*/g, '_$1_')
+    .replace(/\*\*(.+?)\*\*/g, '*$1*')
+    .replace(/\*(.+?)\*/g, '_$1_')
     // Convert inline code
-    .replace(/`(.*?)`/g, '`$1`')
-    // Convert block math
-    .replace(/\$\$([\s\S]*?)\$\$/g, '$ $1 $')
-    // Convert inline math  
-    .replace(/\$([^$\n]+?)\$/g, '$ $1 $');
+    .replace(/`(.+?)`/g, '`$1`')
+    // Convert code blocks - keep them as is for now
+    .replace(/```[\w]*\n([\s\S]*?)```/g, '```\n$1```')
+    // Convert math - fix the regex
+    .replace(/\$\$([^$]+?)\$\$/g, '$ $1 $')
+    .replace(/(?<!\$)\$([^$\n]+?)\$(?!\$)/g, '$$1$')
+    // Convert lists
+    .replace(/^- (.+)$/gm, '- $1')
+    .replace(/^\d+\. (.+)$/gm, '+ $1');
 
-  return `
-#set text(font: "New Computer Modern")
+  console.log("Converted Typst content:", typstContent);
+
+  const finalTypst = `
 #set page(margin: 1in)
 
 ${typstContent}
   `;
+  
+  console.log("Final Typst document:", finalTypst);
+  return finalTypst;
 }
 
-// Client-side only compilation function
-export async function compileToPdf(md: string): Promise<Uint8Array> {
-  // Ensure this only runs on the client side
-  if (typeof window === 'undefined') {
-    throw new Error('PDF compilation must run on the client side');
-  }
+/**
+ * Compile Typst source from Markdown into a PDF (Uint8Array).
+ */
+let compilerPromise: ReturnType<typeof createTypstCompiler> | null = null;
 
-  const typstSource = markdown2typst(md);
-  console.log('Typst source:', typstSource);
+/**
+ * Compile Typst source from Markdown into a PDF (Uint8Array).
+ */
+export async function compileToPdf(md: string): Promise<Uint8Array> {
+  if (typeof window === "undefined") {
+    throw new Error("PDF compilation must run on the client side");
+  }
 
   try {
-    console.log('Loading Typst compiler module...');
+    console.log("Starting PDF compilation...");
+    console.log("Input markdown:", md);
     
-    // Use the basic createTypstCompiler approach without package registry for now
-    const { createTypstCompiler } = await import("@myriaddreamin/typst.ts");
-    
-    console.log('Creating compiler instance...');
-    const compiler = createTypstCompiler();
-    
-    // Initialize with basic configuration
-    await compiler.init({
-      getModule: () => {
-        console.log('Getting WASM module from CDN...');
-        return 'https://cdn.jsdelivr.net/npm/@myriaddreamin/typst-ts-web-compiler/pkg/typst_ts_web_compiler_bg.wasm';
-      },
-    });
-
-    console.log('Adding source file...');
-    await compiler.addSource('/main.typ', typstSource);
-    
-    console.log('Starting PDF compilation...');
-    const result = await compiler.compile({
-      mainFilePath: '/main.typ',
-      format: 'pdf',
-    });
-
-    if (!result.result) {
-      throw new Error("Compilation failed: no result returned");
+    if (!compilerPromise) {
+      console.log("Creating new compiler instance...");
+      compilerPromise = createTypstCompiler(); // loads wasm internally
     }
+    const compiler = await compilerPromise;
+    console.log("Compiler created successfully");
+    
+    // Initialize compiler with basic configuration
+    console.log("Initializing compiler...");
+    await compiler.init({
+      getModule: () => '/wasm/typst_ts_web_compiler_bg.wasm'
+    });
+    console.log("Compiler initialized successfully");
 
-    console.log('PDF compilation successful, size:', result.result.length);
-    return result.result;
+    // Reset and clear any existing workspace
+    await compiler.reset();
+    await compiler.init({
+      getModule: () => '/wasm/typst_ts_web_compiler_bg.wasm'
+    });
+
+    // Simple Typst content without external packages first
+    const typstSource = `
+= Test Document
+
+This is a test paragraph.
+
+== Sub heading
+
+Another paragraph with some text.
+
+*Bold text* and _italic text_.
+
+- List item 1
+- List item 2
+- List item 3
+    `;
+    
+    console.log("Using simple Typst source:", typstSource);
+    
+    // Add source to root workspace
+    console.log("Adding source file to root...");
+    await compiler.addSource('/main.typ', typstSource);
+    console.log("Source file added successfully");
+
+    console.log("Compiling to PDF...");
+    const result = await compiler.compile({
+      mainFilePath: "/main.typ",
+      format: "pdf",
+    });
+    console.log("Compilation result:", result);
+
+    if (result.result && result.result.length > 0) {
+      console.log("PDF compilation successful, result size:", result.result.length);
+      return result.result;
+    } else {
+      console.error("Compilation failed or empty result. Full result:", result);
+      throw new Error(`PDF compilation failed: ${JSON.stringify(result)}`);
+    }
   } catch (error) {
-    console.error("Failed to compile with Typst:", error);
-    throw new Error(`PDF compilation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.error("Error during PDF compilation:", error);
+    throw error;
   }
 }
 
+/**
+ * Trigger download of PDF bytes.
+ */
 export function downloadPdf(pdfBytes: Uint8Array, filename = "markdown-document.pdf") {
-  // Convert to ArrayBuffer for proper Blob handling
-  const arrayBuffer = pdfBytes.buffer.slice(pdfBytes.byteOffset, pdfBytes.byteOffset + pdfBytes.byteLength) as ArrayBuffer;
-  const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+  const blob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
 
   const a = document.createElement("a");

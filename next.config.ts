@@ -1,22 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
-
-export default nextConfig;
-
-/*
-
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
   webpack: (config, { isServer }) => {
     // WASM support
     config.experiments = {
       ...config.experiments,
-      asyncWebAssembly: true,
-      syncWebAssembly: true,
+      asyncWebAssembly: true
     };
 
     // Handle .wasm files properly
@@ -69,4 +58,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-*/

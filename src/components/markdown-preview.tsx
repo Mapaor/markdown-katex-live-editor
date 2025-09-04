@@ -10,9 +10,8 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Document, Page, Text, View, StyleSheet, pdf, Image as PDFImage } from "@react-pdf/renderer"
-import { toPng } from "html-to-image"
 import type { KatexOptions } from "katex"
+import { compileToPdf, downloadPdf } from "@/lib/utils"
 
 declare global {
   interface Window {
@@ -22,144 +21,7 @@ declare global {
   }
 }
 
-const pdfStyles = StyleSheet.create({
-  page: {
-    flexDirection: "column",
-    backgroundColor: "#FFFFFF",
-    padding: 30,
-  },
-  title: {
-    fontSize: 24,
-    marginBottom: 20,
-    fontWeight: "bold",
-  },
-  text: {
-    fontSize: 12,
-    lineHeight: 1.5,
-    marginBottom: 10,
-  },
-  heading: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  mathImage: {
-    marginVertical: 5,
-    alignSelf: "center",
-  },
-  inlineMathImage: {
-    marginHorizontal: 2,
-  },
-})
 
-async function katexToDataUrl(latex: string, opts: { displayMode?: boolean; pixelRatio?: number } = {}) {
-  const wrapper = document.createElement("div")
-  wrapper.style.position = "fixed"
-  wrapper.style.left = "-10000px"
-  wrapper.style.top = "0"
-  wrapper.style.zIndex = "-1000"
-  wrapper.style.backgroundColor = "white"
-  wrapper.style.padding = "10px"
-
-  try {
-    if (typeof window !== "undefined" && window.katex) {
-      const katex = window.katex
-      wrapper.innerHTML = katex.renderToString(latex, {
-        throwOnError: false,
-        displayMode: opts.displayMode || false,
-      })
-    } else {
-      wrapper.textContent = latex
-    }
-  } catch (e) {
-    wrapper.textContent = "KaTeX render error: " + (e as Error).message
-  }
-
-  document.body.appendChild(wrapper)
-
-  const dataUrl = await toPng(wrapper, {
-    pixelRatio: opts.pixelRatio || 2,
-    backgroundColor: "white",
-  })
-
-  document.body.removeChild(wrapper)
-  return dataUrl
-}
-
-const MarkdownPDF = ({ content, mathImages }: { content: string; mathImages: { [key: string]: string } }) => {
-  // Parse content and replace math with placeholders, then split into segments
-  const segments: Array<{ type: "text" | "math"; content: string; isBlock?: boolean }> = []
-  let currentIndex = 0
-
-  // Find all math expressions and create segments
-  const mathRegex = /(\$\$[\s\S]*?\$\$|\$[^$\n]+?\$)/g
-  let match
-
-  while ((match = mathRegex.exec(content)) !== null) {
-    // Add text before math
-    if (match.index > currentIndex) {
-      const textContent = content.slice(currentIndex, match.index)
-      if (textContent.trim()) {
-        segments.push({ type: "text", content: textContent })
-      }
-    }
-
-    // Add math
-    const mathContent = match[1]
-    const isBlock = mathContent.startsWith("$$")
-    segments.push({
-      type: "math",
-      content: mathContent,
-      isBlock,
-    })
-
-    currentIndex = match.index + match[1].length
-  }
-
-  // Add remaining text
-  if (currentIndex < content.length) {
-    const textContent = content.slice(currentIndex)
-    if (textContent.trim()) {
-      segments.push({ type: "text", content: textContent })
-    }
-  }
-
-  return (
-    <Document>
-      <Page size="A4" style={pdfStyles.page}>
-        <View>
-          <Text style={pdfStyles.title}>Markdown Document</Text>
-          {segments.map((segment, index) => {
-            if (segment.type === "text") {
-              // Clean up markdown formatting for text segments
-              const cleanText = segment.content
-                .replace(/#{1,6}\s+/g, "")
-                .replace(/\*\*(.*?)\*\*/g, "$1")
-                .replace(/\*(.*?)\*/g, "$1")
-                .replace(/`(.*?)`/g, "$1")
-                .replace(/\[(.*?)\]$$.*?$$/g, "$1")
-                .trim()
-
-              return cleanText ? (
-                <Text key={index} style={pdfStyles.text}>
-                  {cleanText}
-                </Text>
-              ) : null
-            } else if (segment.type === "math" && mathImages[segment.content]) {
-              return (
-                <View key={index} style={segment.isBlock ? pdfStyles.mathImage : pdfStyles.inlineMathImage}>
-                  <PDFImage src={mathImages[segment.content]} />
-                </View>
-              )
-            }
-            return null
-          })}
-        </View>
-      </Page>
-    </Document>
-  )
-}
 
 export default function MarkdownPreview() {
   const [markdown, setMarkdown] = useState("")
@@ -312,46 +174,14 @@ export default function MarkdownPreview() {
   const downloadPDF = async () => {
     setIsPdfGenerating(true)
     try {
-      // Find all math expressions in the markdown
-      const mathExpressions: string[] = []
-      const mathRegex = /(\$\$[\s\S]*?\$\$|\$[^$\n]+?\$)/g
-      let match
-
-      while ((match = mathRegex.exec(markdown)) !== null) {
-        if (!mathExpressions.includes(match[1])) {
-          mathExpressions.push(match[1])
-        }
-      }
-
-      // Convert each math expression to a data URL
-      const mathImages: { [key: string]: string } = {}
-
-      for (const mathExpr of mathExpressions) {
-        const isBlock = mathExpr.startsWith("$$")
-        const latex = mathExpr.replace(/^\$+|\$+$/g, "").trim()
-
-        try {
-          const dataUrl = await katexToDataUrl(latex, {
-            displayMode: isBlock,
-            pixelRatio: 2,
-          })
-          mathImages[mathExpr] = dataUrl
-        } catch (error) {
-          console.error("Failed to render math:", mathExpr, error)
-        }
-      }
-
-      const doc = <MarkdownPDF content={markdown} mathImages={mathImages} />
-      const asPdf = pdf(doc)
-      const blob = await asPdf.toBlob()
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement("a")
-      link.href = url
-      link.download = "markdown-document.pdf"
-      link.click()
-      URL.revokeObjectURL(url)
+      console.log("Starting PDF download with markdown:", markdown.substring(0, 100) + "...")
+      const pdfBytes = await compileToPdf(markdown)
+      console.log("PDF compilation successful, downloading...")
+      downloadPdf(pdfBytes)
     } catch (error) {
       console.error("Failed to generate PDF:", error)
+      // Show user-friendly error message
+      alert(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setIsPdfGenerating(false)
     }
