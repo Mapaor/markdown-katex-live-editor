@@ -5,6 +5,7 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { Maximize2, Copy, Upload, Moon, Sun, Download, Github, Loader2 } from "lucide-react"
 import { marked } from "marked"
+import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
@@ -164,14 +165,19 @@ export default function MarkdownPreview() {
   const [markdown, setMarkdown] = useState("")
   const [isEditorFullscreen, setIsEditorFullscreen] = useState(false)
   const [isPreviewFullscreen, setIsPreviewFullscreen] = useState(false)
-  const [isDarkMode, setIsDarkMode] = useState(false)
   const [isPdfGenerating, setIsPdfGenerating] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const [stats, setStats] = useState({
     words: 0,
     chars: 0,
     readingTime: 0,
   })
+  const { theme, setTheme } = useTheme()
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     // Load KaTeX CSS
@@ -298,8 +304,9 @@ export default function MarkdownPreview() {
     event.target.value = ""
   }
 
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode)
+  const toggleTheme = () => {
+    if (!mounted) return
+    setTheme(theme === "dark" ? "light" : "dark")
   }
 
   const downloadPDF = async () => {
@@ -351,14 +358,12 @@ export default function MarkdownPreview() {
   }
 
   return (
-    <div className={`min-h-screen p-4 md:p-6 ${isDarkMode ? "dark bg-gray-900" : "bg-background"}`}>
+    <div className="min-h-screen p-4 md:p-6 bg-background">
       <div className="mx-auto max-w-7xl space-y-4">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h1 className={`text-2xl font-bold ${isDarkMode ? "text-white" : ""}`}>Markdown Live Editor</h1>
-            <div
-              className={`flex items-center gap-4 text-sm ${isDarkMode ? "text-gray-300" : "text-muted-foreground"}`}
-            >
+            <h1 className="text-2xl font-bold">Markdown Live Editor</h1>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span>READING TIME: {stats.readingTime} MIN READ</span>
               <span>WORDS: {stats.words}</span>
               <span>CHARACTERS: {stats.chars}</span>
@@ -367,20 +372,22 @@ export default function MarkdownPreview() {
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" asChild>
               <a href="https://github.com/Mapaor/markdown-katex-live-editor" target="_blank" rel="noopener noreferrer">
-                <Github className={`h-4 w-4 ${isDarkMode ? "stroke-gray-200" : "stroke-gray-700"}`} />
+                <Github className="h-4 w-4" />
               </a>
             </Button>
-            <Button variant="ghost" size="sm" onClick={toggleDarkMode}>
-              {isDarkMode ? (
-                <Sun className={`h-4 w-4 stroke-gray-200`} />
+            <Button variant="ghost" size="sm" onClick={toggleTheme}>
+              {!mounted ? (
+                <Moon className="h-4 w-4" />
+              ) : theme === "dark" ? (
+                <Sun className="h-4 w-4" />
               ) : (
-                <Moon className={`h-4 w-4 stroke-gray-700`} />
+                <Moon className="h-4 w-4" />
               )}
             </Button>
           </div>
         </div>
 
-        <Separator className={isDarkMode ? "border-gray-700" : ""} />
+        <Separator />
 
         <input
           ref={fileInputRef}
@@ -394,18 +401,18 @@ export default function MarkdownPreview() {
           {!isPreviewFullscreen && (
             <div className="relative">
               <div className="mb-2 flex items-center justify-between">
-                <Badge variant="secondary" className={isDarkMode ? "bg-gray-700 text-gray-200" : ""}>
+                <Badge variant="secondary">
                   MARKDOWN
                 </Badge>
                 <div className="flex gap-2">
                   <Button variant="ghost" size="sm" onClick={handleFileLoad}>
-                    <Upload className={`h-4 w-4 ${isDarkMode ? "stroke-gray-200" : "stroke-gray-700"}`} />
+                    <Upload className="h-4 w-4" />
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => copyToClipboard("markdown")}>
-                    <Copy className={`h-4 w-4 ${isDarkMode ? "stroke-gray-200" : "stroke-gray-700"}`} />
+                    <Copy className="h-4 w-4" />
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => setIsEditorFullscreen(!isEditorFullscreen)}>
-                    <Maximize2 className={`h-4 w-4 ${isDarkMode ? "stroke-gray-200" : "stroke-gray-700"}`} />
+                    <Maximize2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -413,9 +420,7 @@ export default function MarkdownPreview() {
                 value={markdown}
                 onChange={(e) => setMarkdown(e.target.value)}
                 placeholder="Enter your markdown here... Use $ for inline equations and $$ for block equations."
-                className={`h-[500px] font-mono resize-none overflow-y-auto ${
-                  isDarkMode ? "bg-gray-800 text-white border-gray-600 placeholder:text-gray-400" : ""
-                }`}
+                className="h-[500px] font-mono resize-none overflow-y-auto"
               />
             </div>
           )}
@@ -423,31 +428,27 @@ export default function MarkdownPreview() {
           {!isEditorFullscreen && (
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <Badge variant="secondary" className={isDarkMode ? "bg-gray-700 text-gray-200" : ""}>
+                <Badge variant="secondary">
                   PREVIEW
                 </Badge>
                 <div className="flex gap-2">
                   <Button variant="ghost" size="sm" onClick={downloadPDF} disabled={isPdfGenerating}>
                     {isPdfGenerating ? (
-                      <Loader2
-                        className={`h-4 w-4 animate-spin ${isDarkMode ? "stroke-gray-200" : "stroke-gray-700"}`}
-                      />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Download className={`h-4 w-4 ${isDarkMode ? "stroke-gray-200" : "stroke-gray-700"}`} />
+                      <Download className="h-4 w-4" />
                     )}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => copyToClipboard("html")}>
-                    <Copy className={`h-4 w-4 ${isDarkMode ? "stroke-gray-200" : "stroke-gray-700"}`} />
+                    <Copy className="h-4 w-4" />
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => setIsPreviewFullscreen(!isPreviewFullscreen)}>
-                    <Maximize2 className={`h-4 w-4 ${isDarkMode ? "stroke-gray-200" : "stroke-gray-700"}`} />
+                    <Maximize2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
               <div
-                className={`prose prose-gray max-w-none rounded-md border p-4 h-[500px] overflow-y-auto ${
-                  isDarkMode ? "dark:prose-invert bg-gray-800 border-gray-600 text-white" : "bg-card"
-                }`}
+                className="prose prose-gray max-w-none rounded-md border p-4 h-[500px] overflow-y-auto dark:prose-invert bg-card"
                 dangerouslySetInnerHTML={{ __html: htmlContent }}
               />
             </div>
