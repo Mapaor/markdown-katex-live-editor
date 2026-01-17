@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import type { KatexOptions } from "katex"
-import { compileToPdf, downloadPdf } from "@/lib/utils"
+import { markdownToPdf, downloadPdf } from "@/lib/utils/typst-pdf"
 
 declare global {
   interface Window {
@@ -20,6 +20,12 @@ declare global {
     }
   }
 }
+
+// Configure marked options
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+})
 
 
 
@@ -95,40 +101,41 @@ export default function MarkdownPreview() {
   }, [])
 
   const processKaTeX = (text: string): string => {
-    // Check if KaTeX is loaded
-    if (typeof window !== "undefined" && window.katex) {
-      const katex = window.katex
-
-      text = text.replace(/\$\$([\s\S]*?)\$\$/g, (match, math) => {
+    // Only process on client side
+    if (typeof window === 'undefined' || !window.katex) {
+      return text
+    }
+    try {
+      // Process display math ($$...$$)
+      text = text.replace(/\$\$([^$]+?)\$\$/g, (_, math) => {
         try {
-          return katex.renderToString(math.trim(), {
+          return window.katex!.renderToString(math.trim(), {
             displayMode: true,
             throwOnError: false,
           })
         } catch {
-          return `<span class="text-red-500">Math Error: ${match}</span>`
+          return `<span style="color: red;">Error: ${math}</span>`
         }
       })
-
-      text = text.replace(/\$([^$\n]+?)\$/g, (match, math) => {
+      // Process inline math ($...$)
+      text = text.replace(/\$([^$\n]+?)\$/g, (_, math) => {
         try {
-          return katex.renderToString(math.trim(), {
+          return window.katex!.renderToString(math.trim(), {
             displayMode: false,
             throwOnError: false,
           })
         } catch {
-          return `<span class="text-red-500">Math Error: ${match}</span>`
+          return `<span style="color: red;">Error: ${math}</span>`
         }
       })
-    } else {
-      // If KaTeX is not loaded, just return the text with math delimiters
-      console.log("[v0] KaTeX not loaded yet, skipping math rendering")
+      return text
+    } catch {
+      return text
     }
-
-    return text
   }
 
-  const processedMarkdown = processKaTeX(markdown)
+  // Only process KaTeX when mounted (client-side)
+  const processedMarkdown = mounted ? processKaTeX(markdown) : markdown
   const htmlContent = marked(processedMarkdown) as string
 
   useEffect(() => {
@@ -175,9 +182,9 @@ export default function MarkdownPreview() {
     setIsPdfGenerating(true)
     try {
       console.log("Starting PDF download with markdown:", markdown.substring(0, 100) + "...")
-      const pdfBytes = await compileToPdf(markdown)
+      const pdfBytes = await markdownToPdf(markdown)
       console.log("PDF compilation successful, downloading...")
-      downloadPdf(pdfBytes)
+      downloadPdf(pdfBytes, "markdown-document.pdf")
     } catch (error) {
       console.error("Failed to generate PDF:", error)
       // Show user-friendly error message
@@ -200,12 +207,12 @@ export default function MarkdownPreview() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" asChild>
+            <Button variant="ghost" size="sm" asChild className="cursor-pointer hover:bg-gray-400">
               <a href="https://github.com/Mapaor/markdown-katex-live-editor" target="_blank" rel="noopener noreferrer">
                 <Github className="h-4 w-4" />
               </a>
             </Button>
-            <Button variant="ghost" size="sm" onClick={toggleTheme}>
+            <Button variant="ghost" size="sm" onClick={toggleTheme} className="cursor-pointer hover:bg-gray-400">
               {!mounted ? (
                 <Moon className="h-4 w-4" />
               ) : resolvedTheme === "dark" ? (
@@ -235,13 +242,13 @@ export default function MarkdownPreview() {
                   MARKDOWN
                 </Badge>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={handleFileLoad}>
+                  <Button variant="ghost" size="sm" onClick={handleFileLoad} className="cursor-pointer hover:bg-gray-400">
                     <Upload className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard("markdown")}>
+                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard("markdown") } className="cursor-pointer hover:bg-gray-400"> 
                     <Copy className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setIsEditorFullscreen(!isEditorFullscreen)}>
+                  <Button variant="ghost" size="sm" onClick={() => setIsEditorFullscreen(!isEditorFullscreen)} className="cursor-pointer hover:bg-gray-400">
                     <Maximize2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -262,25 +269,84 @@ export default function MarkdownPreview() {
                   PREVIEW
                 </Badge>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={downloadPDF} disabled={isPdfGenerating}>
+                  <Button variant="ghost" size="sm" onClick={downloadPDF} disabled={isPdfGenerating} className="cursor-pointer hover:bg-gray-400">
                     {isPdfGenerating ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <Download className="h-4 w-4" />
                     )}
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard("html")}>
+                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard("html") } className="cursor-pointer hover:bg-gray-400"> 
                     <Copy className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setIsPreviewFullscreen(!isPreviewFullscreen)}>
+                  <Button variant="ghost" size="sm" onClick={() => setIsPreviewFullscreen(!isPreviewFullscreen)} className="cursor-pointer hover:bg-gray-400">
                     <Maximize2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
               <div
-                className="prose prose-gray max-w-none rounded-md border p-4 h-[500px] overflow-y-auto dark:prose-invert bg-card"
+                className="max-w-none rounded-md border p-4 h-[500px] overflow-y-auto bg-card markdown-content"
                 dangerouslySetInnerHTML={{ __html: htmlContent }}
               />
+              <style dangerouslySetInnerHTML={{
+                __html: `
+                  .markdown-content h1 {
+                    font-size: 2em;
+                    font-weight: bold;
+                    margin: 0.67em 0;
+                    border-bottom: 1px solid #e5e7eb;
+                    padding-bottom: 0.3em;
+                  }
+                  .markdown-content h2 {
+                    font-size: 1.5em;
+                    font-weight: bold;
+                    margin: 0.83em 0;
+                    border-bottom: 1px solid #e5e7eb;
+                    padding-bottom: 0.3em;
+                  }
+                  .markdown-content h3 {
+                    font-size: 1.17em;
+                    font-weight: bold;
+                    margin: 1em 0;
+                  }
+                  .markdown-content ul {
+                    margin: 1em 0;
+                    padding-left: 2em;
+                    list-style-type: disc;
+                  }
+                  .markdown-content ol {
+                    margin: 1em 0;
+                    padding-left: 2em;
+                    list-style-type: decimal;
+                  }
+                  .markdown-content li {
+                    margin: 0.5em 0;
+                  }
+                  .markdown-content p {
+                    margin: 1em 0;
+                    line-height: 1.6;
+                  }
+                  .markdown-content strong {
+                    font-weight: bold;
+                  }
+                  .markdown-content em {
+                    font-style: italic;
+                  }
+                  .markdown-content code {
+                    background-color: #f3f4f6;
+                    padding: 0.2em 0.4em;
+                    border-radius: 3px;
+                    font-family: monospace;
+                  }
+                  .markdown-content pre {
+                    background-color: #f3f4f6;
+                    padding: 1em;
+                    border-radius: 6px;
+                    overflow-x: auto;
+                    margin: 1em 0;
+                  }
+                `
+              }} />
             </div>
           )}
         </div>
