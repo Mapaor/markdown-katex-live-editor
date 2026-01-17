@@ -8,58 +8,52 @@ import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://markdown-preview-katex.vercel.app"),
-  title: "Markdown Editor (with KaTeX support)",
+  metadataBase: new URL("https://md.katex.cc"),
+  title: "Markdown KaTeX Live Editor",
   description:
-    "A powerful markdown editor with live KaTeX math rendering. Write and preview markdown with LaTeX math expressions using $ and $$ delimiters.",
-  keywords: ["markdown", "katex", "latex", "math", "editor", "preview", "live rendering"],
-  authors: [{ name: "v0" }],
-  creator: "v0",
-  publisher: "v0",
-  generator: "v0.app",
+    "Live Markdown editor with KaTeX math rendering, GFM support, and PDF export via Typst.",
+  keywords: [
+    "markdown",
+    "katex",
+    "latex",
+    "math",
+    "editor",
+    "preview",
+    "typst",
+    "pdf",
+  ],
   robots: {
     index: true,
     follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
   },
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://markdown-preview-katex.vercel.app",
-    title: "Markdown KaTeX Preview - Live Math Rendering",
+    url: "https://md.katex.cc",
+    title: "Markdown KaTeX Live Editor",
     description:
-      "A powerful markdown editor with live KaTeX math rendering. Write and preview markdown with LaTeX math expressions.",
-    siteName: "Markdown KaTeX Preview",
+      "Edit Markdown with KaTeX math rendering in real time, preview GFM, and export to PDF via Typst.",
+    siteName: "Markdown KaTeX Live Editor",
     images: [
       {
         url: "/banner-editor.jpg",
         width: 1200,
         height: 630,
-        alt: "Markdown KaTeX Preview - Live Math Rendering Tool",
+        alt: "Markdown KaTeX Live Editor — live preview and export",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Markdown KaTeX Preview - Live Math Rendering",
+    title: "Markdown KaTeX Live Editor",
     description:
-      "A powerful markdown editor with live KaTeX math rendering. Write and preview markdown with LaTeX math expressions.",
+      "Edit Markdown with KaTeX math rendering in real time, preview GFM, and export to PDF via Typst.",
     images: ["/banner-editor.jpg"],
-    creator: "@vercel",
   },
   viewport: {
     width: "device-width",
     initialScale: 1,
     maximumScale: 1,
-  },
-  verification: {
-    google: "your-google-verification-code",
   },
 }
 

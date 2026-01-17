@@ -1,0 +1,24 @@
+<svg
+  width="256"
+  height="256"
+  viewBox="0 0 256 256"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <!-- Document (fons) -->
+  <rect
+    x="48"
+    y="32"
+    width="160"
+    height="192"
+    rx="16"
+    fill="#c9f5d7"
+    stroke="#2A9895"
+    stroke-width="12"
+  />
+
+  <!-- Símbol Markdown (#) -->
+  <line x1="92" y1="80" x2="92" y2="144" stroke="#2A9895" stroke-width="12" />
+  <line x1="124" y1="80" x2="124" y2="144" stroke="#2A9895" stroke-width="12" />
+  <line x1="72" y1="100" x2="144" y2="100" stroke="#2A9895" stroke-width="12" />
+  <line x1="72" y1="124" x2="144" y2="124" stroke="#2A9895" stroke-width="12" />
+</svg>
