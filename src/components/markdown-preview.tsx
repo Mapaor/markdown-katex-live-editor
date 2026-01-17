@@ -207,12 +207,12 @@ export default function MarkdownPreview() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" asChild className="cursor-pointer hover:bg-gray-400">
+            <Button variant="ghost" size="sm" asChild className="cursor-pointer hover:text-blue-500 transition-colors">
               <a href="https://github.com/Mapaor/markdown-katex-live-editor" target="_blank" rel="noopener noreferrer">
                 <Github className="h-4 w-4" />
               </a>
             </Button>
-            <Button variant="ghost" size="sm" onClick={toggleTheme} className="cursor-pointer hover:bg-gray-400">
+            <Button variant="ghost" size="sm" onClick={toggleTheme} className="cursor-pointer hover:text-blue-500 transition-colors">
               {!mounted ? (
                 <Moon className="h-4 w-4" />
               ) : resolvedTheme === "dark" ? (
@@ -242,13 +242,13 @@ export default function MarkdownPreview() {
                   MARKDOWN
                 </Badge>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={handleFileLoad} className="cursor-pointer hover:bg-gray-400">
+                  <Button variant="ghost" size="sm" onClick={handleFileLoad} className="cursor-pointer hover:text-blue-500 transition-colors">
                     <Upload className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard("markdown") } className="cursor-pointer hover:bg-gray-400"> 
+                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard("markdown") } className="cursor-pointer hover:text-blue-500 transition-colors"> 
                     <Copy className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setIsEditorFullscreen(!isEditorFullscreen)} className="cursor-pointer hover:bg-gray-400">
+                  <Button variant="ghost" size="sm" onClick={() => setIsEditorFullscreen(!isEditorFullscreen)} className="cursor-pointer hover:text-blue-500 transition-colors">
                     <Maximize2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -269,17 +269,17 @@ export default function MarkdownPreview() {
                   PREVIEW
                 </Badge>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={downloadPDF} disabled={isPdfGenerating} className="cursor-pointer hover:bg-gray-400">
+                  <Button variant="ghost" size="sm" onClick={downloadPDF} disabled={isPdfGenerating} className="cursor-pointer hover:text-blue-500 transition-colors">
                     {isPdfGenerating ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <Download className="h-4 w-4" />
                     )}
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard("html") } className="cursor-pointer hover:bg-gray-400"> 
+                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard("html") } className="cursor-pointer hover:text-blue-500 transition-colors"> 
                     <Copy className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setIsPreviewFullscreen(!isPreviewFullscreen)} className="cursor-pointer hover:bg-gray-400">
+                  <Button variant="ghost" size="sm" onClick={() => setIsPreviewFullscreen(!isPreviewFullscreen)} className="cursor-pointer hover:text-blue-500 transition-colors">
                     <Maximize2 className="h-4 w-4" />
                   </Button>
                 </div>
