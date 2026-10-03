@@ -195,9 +195,9 @@ export default function MarkdownPreview() {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-6 bg-background">
-      <div className="mx-auto max-w-7xl space-y-4">
-        <div className="flex items-center justify-between">
+    <div className="h-screen flex flex-col p-4 md:p-6 bg-background">
+      <div className="w-full flex-1 flex flex-col space-y-4 min-h-0">
+        <div className="flex items-center justify-between shrink-0">
           <div className="space-y-1">
             <h1 className="text-2xl font-bold">Markdown Live Editor</h1>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -224,7 +224,7 @@ export default function MarkdownPreview() {
           </div>
         </div>
 
-        <Separator />
+        <Separator className="shrink-0" />
 
         <input
           ref={fileInputRef}
@@ -234,10 +234,10 @@ export default function MarkdownPreview() {
           style={{ display: "none" }}
         />
 
-        <div className={`grid gap-4 ${isEditorFullscreen || isPreviewFullscreen ? "" : "md:grid-cols-2"}`}>
+        <div className={`flex-1 grid gap-4 min-h-0 ${isEditorFullscreen || isPreviewFullscreen ? "" : "md:grid-cols-2"}`}>
           {!isPreviewFullscreen && (
-            <div className="relative">
-              <div className="mb-2 flex items-center justify-between">
+            <div className="flex flex-col min-h-0 relative">
+              <div className="mb-2 flex items-center justify-between shrink-0">
                 <Badge variant="secondary">
                   MARKDOWN
                 </Badge>
@@ -257,14 +257,14 @@ export default function MarkdownPreview() {
                 value={markdown}
                 onChange={(e) => setMarkdown(e.target.value)}
                 placeholder="Enter your markdown here... Use $ for inline equations and $$ for block equations."
-                className="h-[500px] font-mono resize-none overflow-y-auto"
+                className="flex-1 font-mono resize-none overflow-y-auto min-h-0"
               />
             </div>
           )}
 
           {!isEditorFullscreen && (
-            <div>
-              <div className="mb-2 flex items-center justify-between">
+            <div className="flex flex-col min-h-0">
+              <div className="mb-2 flex items-center justify-between shrink-0">
                 <Badge variant="secondary">
                   PREVIEW
                 </Badge>
@@ -285,7 +285,7 @@ export default function MarkdownPreview() {
                 </div>
               </div>
               <div
-                className="max-w-none rounded-md border p-4 h-[500px] overflow-y-auto bg-card markdown-content"
+                className="flex-1 max-w-none rounded-md border p-4 overflow-y-auto bg-card markdown-content min-h-0"
                 dangerouslySetInnerHTML={{ __html: htmlContent }}
               />
               <style dangerouslySetInnerHTML={{
