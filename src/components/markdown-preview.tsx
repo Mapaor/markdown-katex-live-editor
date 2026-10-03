@@ -38,7 +38,7 @@ export default function MarkdownPreview() {
   const [stats, setStats] = useState({
     words: 0,
     chars: 0,
-    readingTime: 0,
+    lines: 0,
   })
   const { resolvedTheme, setTheme } = useTheme()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -139,14 +139,14 @@ export default function MarkdownPreview() {
   const htmlContent = marked(processedMarkdown) as string
 
   useEffect(() => {
-    const words = markdown.trim().split(/\s+/).length
+    const words = markdown.trim() ? markdown.trim().split(/\s+/).length : 0
     const chars = markdown.length
-    const readingTime = Math.ceil(words / 200)
+    const lines = markdown.split(/\r\n|\r|\n/).length
 
     setStats({
       words,
       chars,
-      readingTime,
+      lines,
     })
   }, [markdown])
 
@@ -201,7 +201,7 @@ export default function MarkdownPreview() {
           <div className="space-y-1">
             <h1 className="text-2xl font-bold">Markdown Live Editor</h1>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>READING TIME: {stats.readingTime} MIN READ</span>
+              <span>LINES: {stats.lines}</span>
               <span>WORDS: {stats.words}</span>
               <span>CHARACTERS: {stats.chars}</span>
             </div>
