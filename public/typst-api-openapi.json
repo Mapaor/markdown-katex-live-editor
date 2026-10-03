@@ -1,0 +1,512 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "typst-api",
+    "description": "A self-hostable HTTP API for compiling Typst documents",
+    "license": { "name": "MIT", "identifier": "MIT" },
+    "version": "0.2.7"
+  },
+  "paths": {
+    "/admin/fonts": {
+      "post": {
+        "tags": ["handlers::admin"],
+        "operationId": "upload_fonts_handler",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": { "schema": { "type": "string" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Fonts uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UploadFontsResponse" }
+              }
+            }
+          },
+          "400": { "description": "Bad request" }
+        },
+        "security": [{ "bearer_auth": [] }]
+      }
+    },
+    "/admin/fonts/refresh": {
+      "post": {
+        "tags": ["handlers::fonts"],
+        "operationId": "refresh_fonts_handler",
+        "responses": {
+          "200": {
+            "description": "Fonts reloaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshFontsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer_auth": [] }]
+      }
+    },
+    "/admin/fonts/sync": {
+      "post": {
+        "tags": ["handlers::admin"],
+        "operationId": "sync_mirror_fonts_handler",
+        "responses": { "202": { "description": "Sync started" } },
+        "security": [{ "bearer_auth": [] }]
+      }
+    },
+    "/admin/info": {
+      "get": {
+        "tags": ["handlers::admin"],
+        "operationId": "admin_info_handler",
+        "responses": {
+          "200": {
+            "description": "Admin Information",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AdminInfoResponse" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer_auth": [] }]
+      }
+    },
+    "/admin/packages": {
+      "get": {
+        "tags": ["handlers::packages"],
+        "operationId": "list_packages_handler",
+        "responses": {
+          "200": {
+            "description": "List of cached packages and storage size",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PackagesCacheResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SimpleErrorResponse" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer_auth": [] }]
+      }
+    },
+    "/admin/packages/cache": {
+      "delete": {
+        "tags": ["handlers::packages"],
+        "operationId": "clear_packages_cache_handler",
+        "responses": {
+          "200": {
+            "description": "Cache cleared successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimpleSuccessResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SimpleErrorResponse" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer_auth": [] }]
+      }
+    },
+    "/admin/packages/preload": {
+      "post": {
+        "tags": ["handlers::packages"],
+        "operationId": "preload_packages_handler",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreloadPackagesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Packages preloaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimpleSuccessResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SimpleErrorResponse" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer_auth": [] }]
+      }
+    },
+    "/admin/packages/sync-all": {
+      "post": {
+        "tags": ["handlers::packages"],
+        "operationId": "sync_all_packages_handler",
+        "responses": {
+          "202": {
+            "description": "Sync task started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimpleSuccessResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer_auth": [] }]
+      }
+    },
+    "/compile": {
+      "post": {
+        "tags": ["handlers::compile"],
+        "operationId": "compile_handler",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": { "$ref": "#/components/schemas/CompileRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully compiled PDF",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "int32",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Compilation error or bad request",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "408": {
+            "description": "Compilation timed out",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SimpleErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SimpleErrorResponse" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer_auth": [] }]
+      }
+    },
+    "/compile/source": {
+      "post": {
+        "tags": ["handlers::compile"],
+        "operationId": "compile_source_handler",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CompileSourceRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully compiled PDF",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "int32",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Compilation error or bad request",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "408": {
+            "description": "Compilation timed out",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SimpleErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SimpleErrorResponse" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer_auth": [] }]
+      }
+    },
+    "/fonts": {
+      "get": {
+        "tags": ["handlers::fonts"],
+        "operationId": "list_fonts_handler",
+        "responses": {
+          "200": {
+            "description": "List of available system and configured fonts",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FontsResponse" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AdminConfigInfo": {
+        "type": "object",
+        "required": [
+          "port",
+          "max_payload_size_mb",
+          "compilation_timeout_secs",
+          "max_concurrent_compilations",
+          "auth_enabled",
+          "admin_auth_enabled",
+          "cors_enabled",
+          "cache_all_packages",
+          "cache_all_133_typst_fonts"
+        ],
+        "properties": {
+          "admin_auth_enabled": { "type": "boolean" },
+          "auth_enabled": { "type": "boolean" },
+          "cache_all_133_typst_fonts": { "type": "boolean" },
+          "cache_all_packages": { "type": "boolean" },
+          "compilation_timeout_secs": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "cors_enabled": { "type": "boolean" },
+          "max_concurrent_compilations": { "type": "integer", "minimum": 0 },
+          "max_payload_size_mb": { "type": "number", "format": "double" },
+          "port": { "type": "integer", "format": "int32", "minimum": 0 }
+        }
+      },
+      "AdminInfoResponse": {
+        "type": "object",
+        "required": ["status", "version", "uptime_seconds", "config", "stats"],
+        "properties": {
+          "config": { "$ref": "#/components/schemas/AdminConfigInfo" },
+          "stats": { "$ref": "#/components/schemas/AdminStatsInfo" },
+          "status": { "type": "string" },
+          "uptime_seconds": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "version": { "type": "string" },
+          "warning": { "type": ["string", "null"] }
+        }
+      },
+      "AdminStatsInfo": {
+        "type": "object",
+        "required": ["fonts_loaded", "packages_cached"],
+        "properties": {
+          "fonts_loaded": { "type": "integer", "minimum": 0 },
+          "packages_cached": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "CompileRequest": {
+        "type": "object",
+        "required": ["main"],
+        "properties": {
+          "_other_files": {
+            "type": ["array", "null"],
+            "items": { "type": "string", "format": "binary" },
+            "description": "Any additional files (images, typst modules, fonts)"
+          },
+          "main": {
+            "type": "string",
+            "format": "binary",
+            "description": "The main typst file. Field can be named `main` or anything if the filename ends with `.typ`"
+          }
+        }
+      },
+      "CompileSourceRequest": {
+        "type": "object",
+        "required": ["source"],
+        "properties": {
+          "filename": { "type": ["string", "null"], "example": "main.typ" },
+          "source": {
+            "type": "string",
+            "example": "= Hello Typst!\nThis is a simple document."
+          }
+        }
+      },
+      "ErrorInfo": {
+        "type": "object",
+        "required": ["message", "severity"],
+        "properties": {
+          "column": { "type": ["integer", "null"], "minimum": 0 },
+          "file": { "type": ["string", "null"] },
+          "hints": { "type": ["array", "null"], "items": { "type": "string" } },
+          "line": { "type": ["integer", "null"], "minimum": 0 },
+          "message": { "type": "string" },
+          "severity": { "type": "string" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["errors"],
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ErrorInfo" }
+          }
+        }
+      },
+      "FontInfo": {
+        "type": "object",
+        "required": ["family", "style", "weight", "stretch"],
+        "properties": {
+          "family": { "type": "string" },
+          "stretch": { "type": "string" },
+          "style": { "type": "string" },
+          "weight": { "type": "integer", "format": "int32", "minimum": 0 }
+        }
+      },
+      "FontsResponse": {
+        "type": "object",
+        "required": ["fonts"],
+        "properties": {
+          "fonts": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/FontInfo" }
+          }
+        }
+      },
+      "PackageInfoResponse": {
+        "type": "object",
+        "required": ["name", "version", "size_bytes"],
+        "properties": {
+          "name": { "type": "string" },
+          "size_bytes": { "type": "integer", "format": "int64", "minimum": 0 },
+          "version": { "type": "string" }
+        }
+      },
+      "PackagesCacheResponse": {
+        "type": "object",
+        "required": ["total_packages", "total_size_bytes", "packages"],
+        "properties": {
+          "packages": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PackageInfoResponse" }
+          },
+          "total_packages": { "type": "integer", "minimum": 0 },
+          "total_size_bytes": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          }
+        }
+      },
+      "PreloadPackagesRequest": {
+        "type": "object",
+        "required": ["packages"],
+        "properties": {
+          "packages": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["@preview/cetz:0.3.1", "@preview/tablex:0.0.8"]
+          }
+        }
+      },
+      "RefreshFontsResponse": {
+        "type": "object",
+        "required": ["status", "message"],
+        "properties": {
+          "message": { "type": "string" },
+          "status": { "type": "string" }
+        }
+      },
+      "SimpleErrorResponse": {
+        "type": "object",
+        "required": ["error"],
+        "properties": { "error": { "type": "string" } }
+      },
+      "SimpleSuccessResponse": {
+        "type": "object",
+        "required": ["status", "message"],
+        "properties": {
+          "message": { "type": "string" },
+          "status": { "type": "string" }
+        }
+      },
+      "UploadFontsResponse": {
+        "type": "object",
+        "required": ["fonts_added"],
+        "properties": { "fonts_added": { "type": "integer", "minimum": 0 } }
+      }
+    },
+    "securitySchemes": {
+      "bearer_auth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Token"
+      }
+    }
+  }
+}
