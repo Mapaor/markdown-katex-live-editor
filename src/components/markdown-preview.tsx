@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
-import { Maximize2, Copy, Upload, Moon, Sun, Download, Github, Loader2 } from "lucide-react"
+import { Maximize2, Minimize2, Copy, Upload, Moon, Sun, Download, Github, Loader2, Check } from "lucide-react"
 import { marked } from "marked"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
@@ -42,6 +42,8 @@ export default function MarkdownPreview() {
   })
   const { resolvedTheme, setTheme } = useTheme()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [copiedMarkdown, setCopiedMarkdown] = useState(false)
+  const [copiedHtml, setCopiedHtml] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -153,6 +155,14 @@ export default function MarkdownPreview() {
   const copyToClipboard = async (format: "markdown" | "html") => {
     const content = format === "markdown" ? markdown : htmlContent
     await navigator.clipboard.writeText(content)
+    
+    if (format === "markdown") {
+      setCopiedMarkdown(true)
+      setTimeout(() => setCopiedMarkdown(false), 1000)
+    } else {
+      setCopiedHtml(true)
+      setTimeout(() => setCopiedHtml(false), 1000)
+    }
   }
 
   const handleFileLoad = () => {
@@ -246,10 +256,10 @@ export default function MarkdownPreview() {
                     <Upload className="h-4 w-4" />
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => copyToClipboard("markdown") } className="cursor-pointer hover:text-blue-500 transition-colors"> 
-                    <Copy className="h-4 w-4" />
+                    {copiedMarkdown ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => setIsEditorFullscreen(!isEditorFullscreen)} className="cursor-pointer hover:text-blue-500 transition-colors">
-                    <Maximize2 className="h-4 w-4" />
+                    {isEditorFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
@@ -277,10 +287,10 @@ export default function MarkdownPreview() {
                     )}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => copyToClipboard("html") } className="cursor-pointer hover:text-blue-500 transition-colors"> 
-                    <Copy className="h-4 w-4" />
+                    {copiedHtml ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => setIsPreviewFullscreen(!isPreviewFullscreen)} className="cursor-pointer hover:text-blue-500 transition-colors">
-                    <Maximize2 className="h-4 w-4" />
+                    {isPreviewFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
