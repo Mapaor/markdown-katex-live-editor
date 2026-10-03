@@ -18,6 +18,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'typstSource is required' }, { status: 400 });
         }
 
+        console.log("Making a POST request to:s", apiUrl)
         const response = await fetch(`${apiUrl}/compile/source`, {
             method: 'POST',
             headers: {
@@ -30,6 +31,8 @@ export async function POST(req: Request) {
             const errorText = await response.text();
             console.error('Typst API error:', response.status, errorText);
             return NextResponse.json({ error: 'Compilation failed on server' }, { status: response.status });
+        } else {
+            console.log("HTTP POST request succeeded")
         }
 
         const pdfBuffer = await response.arrayBuffer();
