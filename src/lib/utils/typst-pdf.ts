@@ -68,11 +68,36 @@ async function initCompiler() {
  */
 export async function markdownToPdf(markdown: string): Promise<Uint8Array> {
 	try {
-		// Get or create compiler
-		const compiler = await initCompiler()
-
 		// Convert markdown to Typst
 		const typstSource = markdown2typst(markdown)
+
+		// Try server-side API first
+		try {
+			const response = await fetch('/api/compile-pdf', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ typstSource })
+			});
+			
+			if (response.ok) {
+				const arrayBuffer = await response.arrayBuffer();
+				return new Uint8Array(arrayBuffer);
+			}
+			
+			// If status is 501, server-side compilation is disabled in .env
+			if (response.status !== 501) {
+				console.warn('Server-side PDF generation failed, falling back to WASM.', await response.text());
+			}
+		} catch (err) {
+			console.warn('Failed to reach server-side API, falling back to WASM.', err);
+		}
+
+		// Fallback to WASM compilation
+		// Get or create compiler
+		const compiler = await initCompiler()
+		
 		// Add source to compiler
 		compiler.addSource('/main.typ', typstSource)
 		// Compile to PDF
