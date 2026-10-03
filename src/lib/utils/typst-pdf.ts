@@ -6,6 +6,8 @@
 import { createTypstCompiler, loadFonts } from '@myriaddreamin/typst.ts'
 import { markdown2typst } from 'markdown2typst'
 
+const typstFontName = "Geist" // Chosen text font for the generated PDF
+
 // Singleton compiler instance
 
 let compilerInstance: Awaited<ReturnType<typeof createTypstCompiler>> | null = null
@@ -69,7 +71,8 @@ async function initCompiler() {
 export async function markdownToPdf(markdown: string): Promise<Uint8Array> {
 	try {
 		// Convert markdown to Typst
-		const typstSource = markdown2typst(markdown)
+		let typstSource = markdown2typst(markdown)
+		typstSource = `#set text(font: "${typstFontName}")\n\n${typstSource}` // We set the font of the document
 
 		// Try server-side API first
 		try {
